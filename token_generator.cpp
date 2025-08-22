@@ -1,101 +1,66 @@
-#include<iostream>
-#include<regex>
-#include<string>
-#include<fstream>
-#include<sstream>
-#include<unordered_set>
+#include <iostream>
+#include <fstream>
+#include <regex>
+#include <string>
+#include <unordered_set>
 using namespace std;
 
-unordered_set<string>keywords={
- "int", "float", "double", "char", "void", "if", "else", "while", "for",
+unordered_set<string> keywords = {
+    "int", "float", "double", "char", "void", "if", "else", "while", "for",
     "return", "break", "continue", "switch", "case", "default", "struct",
     "class", "public", "private", "protected", "namespace", "template", "try", "catch"
 };
 
-string tokentype(const string& token)
-{
-    if(keywords.find(token)!=keywords.end())
-    {
-        return "keywords";
-    }
+// Function to identify token type
+string tokenType(const string& token, const string& nextToken) {
+    if (keywords.count(token)) return "keyword";
 
-    regex identifier("^[a-zA-Z_][0-9a-zA-Z_]*$");
-    if(regex_match(token,identifier))
-    {
+    // Function check: identifier followed by "("
+    if (regex_match(token, regex("^[a-zA-Z_][a-zA-Z0-9_]*$")) && nextToken == "(")
+        return "function";
+
+    // Valid identifier
+    if (regex_match(token, regex("^[a-zA-Z_][a-zA-Z0-9_]*$")))
         return "identifier";
-    }
 
-    regex number("^[+-]?([0-9]*[.])?[0-9]+$");
-    if(regex_match(token,number))
-    {
-        return "number";
-    }
+    // Invalid identifier (starts with number but has letters/underscores)
+    if (regex_match(token, regex("^[0-9][a-zA-Z0-9_]+$")))
+        return "invalid identifier";
 
-    regex string_("^\".*\"$");
-    if(regex_match(token,string_))
-    {
-        return "string";
-    }
+    if (regex_match(token, regex("^[+-]?[0-9]+(\\.[0-9]+)?$"))) return "number";
+    if (regex_match(token, regex("^\".*\"$"))) return "string";
+    if (regex_match(token, regex("^'.'$"))) return "char";
+    if (regex_match(token, regex("^[+*/%=<>!&|^~\\-]+$"))) return "operator";
 
-    regex char_("^'.'$");
-    if(regex_match(token,char_))
-    {
-        return "char";
-    }
-
-    regex operatorRegex("^[\\+\\-\\*/%=<>!&|^~]+$");
-    if (regex_match(token, operatorRegex)) {
-        return "operator";
-    }
-
-    return "delimeter";
+    return "delimiter";
 }
-int main()
-{
-    remove("done.txt");
-    string file_name;
-    cout<<"Enter the file name:";
-    cin>>file_name;
-    fstream file(file_name);
-    ofstream new_file("done.txt");
 
-    if(!file.is_open())
-    {
-        cout<< "Error occur while opening the file.";
+int main() {
+    ifstream file("test.txt");
+    if (!file.is_open()) {
+        cerr << "Error: cannot open file\n";
         return 1;
     }
 
-    string code,line;
-    while(getline(file,line))
-    {
-        code=code+line+"\n";
-    }
-
-    regex tokenRegex(R"(\s*([a-zA-Z_][0-9a-zA-Z_]*|[0-9]+(?:\.[0-9]+)?|\"[^\"]*\"|'.'|\S)\s*)");
-    smatch matches;
-
-    string::const_iterator start(code.cbegin());
-    while(regex_search(start,code.cend(),matches,tokenRegex))
-    {
-        string token=matches[1].str();
-
-        if(token.empty()||token==" "||token=="\n"||token=="\t")
-        {
-            start=matches.suffix().first;
-            continue;
-        }
-
-        string token_type=tokentype(token);
-        new_file<<token<< " - "<< token_type<<endl;
-        start=matches.suffix().first;
-    }
-
-    cout<<"Process is done.";
-
+    string code((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
     file.close();
-    new_file.close();
 
+    // Updated regex: also match invalid identifiers like 1num
+    regex tokenRegex("([a-zA-Z_][a-zA-Z0-9_]*|[0-9][a-zA-Z0-9_]+|[0-9]+(\\.[0-9]+)?|\"[^\"]*\"|'.'|[+*/%=<>!&|^~\\-]+|;|\\(|\\)|\\{|\\}|\\[|\\])");
+    smatch match;
+    string::const_iterator start = code.cbegin();
 
+    vector<string> tokens;
 
+    // Collect all tokens first
+    while (regex_search(start, code.cend(), match, tokenRegex)) {
+        tokens.push_back(match.str());
+        start = match.suffix().first;
+    }
 
+    // Now classify with lookahead (for functions)
+    for (size_t i = 0; i < tokens.size(); i++) {
+        string next = (i + 1 < tokens.size()) ? tokens[i + 1] : "";
+        cout << tokens[i] << " >> is a " << tokenType(tokens[i], next) << endl;
+    }
 }
