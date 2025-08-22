@@ -1,7 +1,10 @@
-#include <stdio.h> // Include the standard input/output library firsy
+#include <stdio.h> // Include the standard input/ output library2nd
 
-
-
+// Include the standard input/output library 3rd
+/*
+  this is main function
+  we write code here 1dsfdsa1
+*/
 int main() {
     int num1 = 10; 
     int num2 = 20; 
@@ -9,8 +12,7 @@ int main() {
 
     sum = num1 + num2;
 
-   s a format specifier for integers.
-     */
+   
     printf("The sum of %d and %d is: %d\n", num1, num2, sum);
 
     return 0; 
