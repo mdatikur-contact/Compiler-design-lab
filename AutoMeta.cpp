@@ -1,4 +1,4 @@
-#include <iostream>
+//auto meta code
 #include <bits/stdc++.h>
 using namespace std;
 

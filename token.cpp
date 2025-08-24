@@ -3,11 +3,15 @@ using namespace std;
 
 // Correct spelling
 unordered_set<string> keywords = {
-    "int", "double", "float", "char", "void", "if", "else", "while", "for"};
+    "int", "double", "float", "char", "void", "if", "else", "while", "for", "return"};
 
 // Function to classify each token
 string tokenType(const string &token, const string &nextToken)
 {
+    if (regex_match(token, regex(R"(//.*)")))
+        return "Single-line Comment";
+    if (regex_match(token, regex(R"(/\*[\s\S]*\*/)")))
+        return "Multi-line Comment";
     if (regex_match(token, regex("^#.*$")))
         return "Preprocessor";
     if (regex_match(token, regex("^<.*>$")))
@@ -37,10 +41,10 @@ int main()
     string code((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
     file.close();
 
-    // Token regex
-    regex tokenRegex(R"((#\s*[a-zA-Z_][a-zA-Z0-9_]*)|(<[a-zA-Z0-9_./]+>)|([a-zA-Z_][a-zA-Z0-9_]*)|(\d+(\.\d+)?)|([+\*/%&|^~!=<>-]+)|([{}()\[\];,]))");
+    // Token regex: put comments FIRST so they eat whole lines/blocks
+    regex tokenRegex(
+        R"((//.*)|(/\*[\s\S]*?\*/)|(#\s*[a-zA-Z_][a-zA-Z0-9_]*)|(<[a-zA-Z0-9_./]+>)|([a-zA-Z_][a-zA-Z0-9_]*)|(\d+(\.\d+)?)|([+\*/%&|^~!=<>-]+)|([{}()\[\];,]))");
 
-    // Tokenize
     smatch match;
     string::const_iterator start = code.cbegin();
     vector<string> tokens;
@@ -55,7 +59,7 @@ int main()
     for (size_t i = 0; i < tokens.size(); i++)
     {
         string next = (i + 1 < tokens.size()) ? tokens[i + 1] : "";
-        cout << tokens[i] << " is a " << tokenType(tokens[i], next) << endl;
+        cout << tokens[i] << " is a : " << tokenType(tokens[i], next) << endl;
     }
 
     return 0;

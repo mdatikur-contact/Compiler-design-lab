@@ -1,3 +1,7 @@
+//auto meta code
+/* multiline
+comment*/
+
 #include <stdio.h>
 #include <iostream>
 
